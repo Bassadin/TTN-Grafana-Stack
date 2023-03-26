@@ -1,0 +1,46 @@
+version: '3.7'
+
+services:
+  telegraf:
+    image: telegraf
+    restart: unless-stopped
+    links:
+      - influxdb
+    env_file:
+      - config/configuration.env
+      - ttn/ttn_config.env
+    volumes:
+      - ./telegraf/telegraf.conf:/etc/telegraf/telegraf.conf:ro
+    depends_on:
+      - influxdb
+    ports:
+      - "8125:8125"
+
+  influxdb:
+    image: influxdb:2.6-alpine
+    restart: unless-stopped
+    env_file:
+      - config/configuration.env
+    volumes:
+      - influxdb_data:/var/lib/influxdb2:rw
+    ports:
+      - "8086:8086"
+
+  grafana:
+    image: grafana/grafana
+    restart: unless-stopped
+    links:
+      - influxdb
+    depends_on:
+      - influxdb
+      - telegraf
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    env_file:
+      - config/configuration.env
+
+volumes:
+  grafana_data:
+  influxdb_data:
